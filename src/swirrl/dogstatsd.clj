@@ -33,9 +33,6 @@
     [java.net InetSocketAddress DatagramSocket DatagramPacket]))
 
 
-(defonce *state (atom nil))
-
-
 (defn configure!
   "Just pass StatsD server URI:
 
@@ -54,14 +51,14 @@
            port   (if (string? port) (Integer/parseInt port) port)
            socket ^java.net.SocketAddress (DatagramSocket.)
            addr   ^java.net.InetSocketAddress (InetSocketAddress. ^String host ^Long port)]
-       (reset! *state (merge (select-keys opts [:tags])
-                             {:socket socket
-                              :addr addr}))))))
+       (merge (select-keys opts [:tags])
+              {:socket socket
+               :addr addr})))))
 
 
-(defn- send! [^String payload]
+(defn- send! [client ^String payload]
 ;;   (println "[ metrics ]" payload)
-  (if-let [{:keys [socket addr]} @*state]
+  (if-let [{:keys [socket addr]} client]
     (let [bytes (.getBytes payload "UTF-8")]
       (try
         (.send ^DatagramSocket socket
@@ -81,7 +78,7 @@
     (str/join ",")))
 
 
-(defn- format-metric [metric type value tags sample-rate]
+(defn- format-metric [client metric type value tags sample-rate]
   (assert (re-matches #"[a-zA-Z][a-zA-Z0-9_.]*" metric) (str "Invalid metric name: " metric))
   (assert (< (count metric) 200) (str "Metric name too long: " metric))
   (str metric
@@ -89,7 +86,7 @@
        "|" type
        (when-not (== 1 sample-rate)
          (str "|@" sample-rate))
-       (let [global-tags (:tags @*state)]
+       (let [global-tags (:tags client)]
          (when (or (not-empty tags)
                    (not-empty global-tags))
            (str "|#" (format-tags global-tags tags))))))
@@ -97,13 +94,13 @@
 
 (defn- report-fn [type]
   (fn report!
-    ([name value] (report! name value {}))
-    ([name value opts]
+    ([client name value] (report! client name value {}))
+    ([client name value opts]
       (let [tags        (:tags opts [])
             sample-rate (:sample-rate opts 1)]
         (when (or (== sample-rate 1)
                   (< (rand) sample-rate))
-          (send! (format-metric name type value tags sample-rate)))))))
+          (send! client (format-metric client name type value tags sample-rate)))))))
 
 
 (def increment! (report-fn "c"))
@@ -115,10 +112,10 @@
 (def histogram! (report-fn "h"))
 
 
-(defmacro measure! [metric opts & body]
+(defmacro measure! [client metric opts & body]
   `(let [t0#  (System/currentTimeMillis)
          res# (do ~@body)]
-     (histogram! ~metric (- (System/currentTimeMillis) t0#) ~opts)
+     (histogram! ~client ~metric (- (System/currentTimeMillis) t0#) ~opts)
      res#))
 
 
@@ -129,7 +126,7 @@
   (str/replace s "\n" "\\n"))
 
 
-(defn- format-event [title text opts]
+(defn- format-event [client title text opts]
   (let [title' (escape-event-string title)
         text'  (escape-event-string text)
         {:keys [tags ^java.util.Date date-happened hostname aggregation-key
@@ -150,7 +147,7 @@
          (when alert-type
            (assert (#{:error :warning :info :success} alert-type))
            (str "|t:" (name alert-type)))
-         (let [global-tags (:tags @*state)]
+         (let [global-tags (:tags client)]
            (when (or (not-empty tags)
                      (not-empty global-tags))
              (str "|#" (format-tags global-tags tags)))))))
@@ -166,7 +163,7 @@
               :priority         => :normal | :low
               :source-type=name => String
               :alert-type       => :error | :warning | :info | :success }"
-  [title text opts]
-  (let [payload (format-event title text opts)]
+  [client title text opts]
+  (let [payload (format-event client title text opts)]
     (assert (< (count payload) (* 8 1024)) (str "Payload too big: " title text payload))
-    (send! payload)))
+    (send! client payload)))
