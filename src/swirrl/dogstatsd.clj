@@ -1,32 +1,32 @@
 (ns ^{:doc
      "    (configure! \"localhost:8125\")
-     
+
      Total value/rate:
-      
+
        (increment! \"chat.request.count\"  1)
-      
+
      In-the-moment value:
-      
+
        (gauge!     \"chat.ws.connections\" 17)
-      
+
      Values distribution (mean, avg, max, percentiles):
-      
+
        (histogram! \"chat.request.time\"   188.17)
-      
+
      Counting unique values:
-      
+
        (set!       \"chat.user.email\"   \"nikita@mailforspam.com\")
-      
+
      Supported opts (third argument):
-      
+
        { :tags => [String+] | { Keyword -> Any | Nil }
          :sample-rate => Double[0..1] }
-      
+
      E.g. (increment! \"chat.request.count\" 1
             { :tags        { :env \"production\", :chat nil } ;; => |#env:production,chat
               :tags        [ \"env:production\"  \"chat\" ]   ;; => |#env:production,chat
               :sample-rate 0.5 }                              ;; Throttling 50%"}
-  cognician.dogstatsd
+    swirrl.dogstatsd
   (:require
     [clojure.string :as str])
   (:import
@@ -38,13 +38,13 @@
 
 (defn configure!
   "Just pass StatsD server URI:
-  
+
      (configure! \"localhost:8125\")
      (configure! \":8125\")
      (configure! \"localhost\")
-    
+
    Pass system-wide tags to opts:
-  
+
      (configure! \"localhost:8125\" {:tags {:env \"production\"}})"
   ([uri] (configure! uri {}))
   ([uri opts]
@@ -107,7 +107,7 @@
 
 
 (def increment! (report-fn "c"))
-  
+
 
 (def gauge! (report-fn "g"))
 
