@@ -1,5 +1,5 @@
 (ns ^{:doc
-      "(def client (configure \"localhost:8125\"))
+      "(def client (configure {:uri \"localhost:8125\"}))
 
      Total value/rate:
 
@@ -36,24 +36,23 @@
 (defn configure
   "Just pass StatsD server URI:
 
-     (configure \"localhost:8125\")
-     (configure \":8125\")
-     (configure \"localhost\")
+     (configure {:uri \"localhost:8125\"})
+     (configure {:uri \":8125\"})
+     (configure {:url \"localhost\"})
 
-   Pass system-wide tags to opts:
+   You can also set extra system-wide tags:
 
-     (configure \"localhost:8125\" {:tags {:env \"production\"}})"
-  ([uri] (configure uri {}))
-  ([uri opts]
-   (when-let [[_ host port] (and uri (re-matches #"([^:]*)(?:\:(\d+))?" uri))]
-     (let [host   (if (str/blank? host) "localhost" host)
-           port   (if (str/blank? port) 8125 port)
-           port   (if (string? port) (Integer/parseInt port) port)
-           socket ^java.net.SocketAddress (DatagramSocket.)
-           addr   ^java.net.InetSocketAddress (InetSocketAddress. ^String host ^Long port)]
-       (merge (select-keys opts [:tags])
-              {:socket socket
-               :addr addr})))))
+     (configure {:uri \"localhost:8125\" :tags {:env \"production\"}})"
+  [{:keys [uri] :as opts}]
+  (when-let [[_ host port] (and uri (re-matches #"([^:]*)(?:\:(\d+))?" uri))]
+    (let [host   (if (str/blank? host) "localhost" host)
+          port   (if (str/blank? port) 8125 port)
+          port   (if (string? port) (Integer/parseInt port) port)
+          socket ^java.net.SocketAddress (DatagramSocket.)
+          addr   ^java.net.InetSocketAddress (InetSocketAddress. ^String host ^Long port)]
+      (merge (select-keys opts [:tags])
+             {:socket socket
+              :addr addr}))))
 
 
 (defn- send! [client ^String payload]
