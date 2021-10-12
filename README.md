@@ -1,21 +1,41 @@
 # Clojure client for DogStatsD, Datadog’s StatsD agent
 
+*NOTE: This project is a fork of [cognician/dogstatsd](https://github.com/Cognician/dogstatsd-clj)*
+
+The primary motivation for this fork was to make a version of the
+library which was less complected around the configuration of the
+statsd client. In particular making the library more ameneable to use
+with component systems such as [integrant](https://github.com/weavejester/integrant).
+
+The original library held its configuration (the client) in an atom
+which served as an implicit argument to all the reporting procedures.
+This made it awkward to integrate with integrant as its configuration
+was managed outside of the integrant system, and the component would
+need to given special treatment to be configured and initialised.
+
+This fork makes a breaking change to the original library which is to
+make this implicit "client" object an explicit first argument to all
+the reporting functions.  This fork has no external dependencies, not
+even on integrant, and expects users of the library to wrap their call
+to configure in an integrant `defmethod` themselves.
+
 For general information about DataDog, DogStatsD, how they're useful
 and why all this is useful - read the _Rationale, Context, additional
 documentation_ section below.
 
 ## Setting things up
 
-Add to project.clj:
+Add to project.clj or deps.edn:
 
 ```clj
-[cognician/dogstatsd-clj "0.1.1"]
+[com.swirrl/dogstatsd "0.1.1"] ;; leiningen
+com.swirrl/dogstatsd {:mvn/version "0.1.2"} ;; tools.deps
 ```
 
 Require it:
 
 ```clj
-(require '[cognician.dogstatsd :as dogstatsd])
+(require '[swirrl.dogstatsd :as dogstatsd])
 ```
 
 
@@ -24,13 +44,13 @@ Require it:
 To configure, provide URL of DogStatsD:
 
 ```clj
-(dogstatsd/configure! "localhost:8125")
+(def client (dogstatsd/configure "localhost:8125"))
 ```
 
 Optionally, you can provide set of global tags to be appended to every metric:
 
 ```clj
-(dogstatsd/configure! "localhost:8125" { :tags {:env "production", :project "Secret"} })
+(def client (dogstatsd/configure "localhost:8125" { :tags {:env "production", :project "Secret"} }))
 ```
 
 
@@ -41,32 +61,32 @@ After that, you can start reporting metrics:
 Total value/rate:
 
 ```clj
-(dogstatsd/increment! "chat.request.count" 1)
+(dogstatsd/increment! client "chat.request.count" 1)
 ```
 
 In-the-moment value:
 
 ```clj
-(dogstatsd/gauge! "chat.ws.connections" 17)
+(dogstatsd/gauge! client "chat.ws.connections" 17)
 ```
 
 Values distribution (mean, avg, max, percentiles):
 
 ```clj
-(dogstatsd/histogram! "chat.request.time" 188.17)
+(dogstatsd/histogram! client "chat.request.time" 188.17)
 ```
 
 To measure function execution time, use `d/measure!`:
 
 ```clj
-(dogstatsd/measure! "thread.sleep.time" {}
+(dogstatsd/measure! client "thread.sleep.time" {}
   (Thread/sleep 1000))
 ```
 
 Counting unique values:
 
 ```clj
-(dogstatsd/set! "chat.user.email" "nikita@mailforspam.com")
+(dogstatsd/set! client "chat.user.email" "nikita@mailforspam.com")
 ```
 
 
@@ -95,7 +115,7 @@ or as a vector:
 ## Events:
 
 ```clj
-(dogstatsd/event! "title" "text" opts)
+(dogstatsd/event! client "title" "text" opts)
 ```
 
 where opts could contain any subset of:
@@ -114,17 +134,18 @@ where opts could contain any subset of:
 ## Example
 
 ```clj
-(require '[cognician/dogstatsd :as dogstatsd])
+(require '[swirrl/dogstatsd :as dogstatsd])
 
-(dogstatsd/configure! "localhost:8125" {:tags {:env "production"}})
+(def client (dogstatsd/configure "localhost:8125" {:tags {:env "production"}}))
 
-(dogstatsd/increment! "request.count" 1 {:tags ["endpoint:messages__list"]
-                                 :sample-rate 0.5})
+(dogstatsd/increment! client "request.count" 1 {:tags ["endpoint:messages__list"]
+                                                :sample-rate 0.5})
 ```
 
 ## Rationale, context, additional documentation ##
 
 ### Rationale and Context ###
+
 DataDog, being a monitoring service, has the ability, through their
 DogStatsD implementation, to collect and show important information
 like when things are happening, and how long those things take.
@@ -146,39 +167,22 @@ Since DogStatsD is DataDog's service, you'll want to tighten the loop
 on feedback and prevent contamination of production data with
 dev/testing info.
 
-An excellent package is
-[https://github.com/jonmorehouse/dogstatsd-local](https://github.com/jonmorehouse/dogstatsd-local) 
+A simple way to capture the output is to set netcat listening e.g.
 
-It allows you to create a StatsD listener on localhost - and spits
-results out in the terminal when you make calls. The process is pretty
-straightforward:
-- Install go `brew install go` worked nicely enough
-- Clone the repository: `git clone https://github.com/jonmorehouse/dogstatsd-local.git` 
-- cd into the repository and enter `go build`
-- then, run `./dogstatsd-local -port=8126`
-
-dogstatsd-local is now listening on port 8126.
-
-You'll need to then tell whatever is using this library at
-configure-time to send requests to localhost:8126.
-
-To make this work for Manage, the following was
-added to the ~/.zshrc file:
-
-`export COGNICIAN_STATSD_URI="localhost:8126"`
-
-... then, when manage runs, it uses the configuration library, which
-ultimately reads this value from the system environment.
-
-Now, when manage is run in dev mode and instrumented code is hit, the results are
-available immediately in the terminal :)
-
-### Conventions ###
-Of course, you can do whatever you want, but it's much more convenient
-for everyone if you include it as "dogstatsd" - so searching across
-codebases is easier ;)
+```
+$ nc -u -l 8125
+some.gauge:1|csome.histogram:1|h_e{10,8}:some.event|an event|#some::tags
+```
 
 ## CHANGES
+
+*swirrl/dogstatsd 0.1.3*
+
+- Make client argument explicit on all reporting procedures
+- Update README
+- Fork project and rename
+- Switch to tools.deps and tools.build
+
 
 *0.1.2*
 
