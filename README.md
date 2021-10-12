@@ -199,5 +199,6 @@ some.gauge:1|csome.histogram:1|h_e{10,8}:some.event|an event|#some::tags
 ## License
 
 Copyright © 2015 Cognician Software (Pty) Ltd
+Copyright © 2021 Swirrl IT Ltd
 
 Distributed under the Eclipse Public License, the same as Clojure.
