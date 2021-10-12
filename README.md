@@ -19,10 +19,6 @@ the reporting functions.  This fork has no external dependencies, not
 even on integrant, and expects users of the library to wrap their call
 to configure in an integrant `defmethod` themselves.
 
-For general information about DataDog, DogStatsD, how they're useful
-and why all this is useful - read the _Rationale, Context, additional
-documentation_ section below.
-
 ## Setting things up
 
 Add to project.clj or deps.edn:
@@ -142,26 +138,7 @@ where opts could contain any subset of:
                                                 :sample-rate 0.5})
 ```
 
-## Rationale, context, additional documentation ##
-
-### Rationale and Context ###
-
-DataDog, being a monitoring service, has the ability, through their
-DogStatsD implementation, to collect and show important information
-like when things are happening, and how long those things take.
-
-An example is here:
-[Cog Validation
-Time](https://app.datadoghq.com/dash/211555/production-monolith?screenId=211555&screenName=production-monolith&from_ts=1544104800000&is_auto=false&live=true&page=0&to_ts=1544191200000&fullscreen_widget=399429687&tile_size=m)
-
-(It should show how long a validation function takes, which, over
-time, we hope to correlate with core dumps or slow service events)
-
-Because the data is pulled into DataDog, the graph widgets can be
-pulled into dashboards, so synchronisation and correlation can take
-place.
-
-### Local testing ###
+## Local testing
 
 Since DogStatsD is DataDog's service, you'll want to tighten the loop
 on feedback and prevent contamination of production data with
