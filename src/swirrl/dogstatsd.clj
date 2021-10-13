@@ -112,6 +112,8 @@
   Note: A COUNT is different from the RATE metric type, which represents
   the number of event occurrences normalized per second given the
   defined time interval"
+  ([client name]
+   (report! client "c" name 1 {}))
   ([client name value]
    (report! client "c" name value {}))
   ([client name value opts]
@@ -131,6 +133,8 @@
   Note: A COUNT is different from the RATE metric type, which represents
   the number of event occurrences normalized per second given the
   defined time interval"
+  ([client name]
+   (report! client "c" name -1 {}))
   ([client name value]
    (report! client "c" name (- value) {}))
   ([client name value opts]
