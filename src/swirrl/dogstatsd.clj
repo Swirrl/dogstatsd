@@ -199,9 +199,9 @@
 
 
 (defn set!
-  "Stored as a GAUGE type in Datadog. Each value in the stored
-  timeseries is the count of unique values submitted to StatsD for a
-  metric over the flush period."
+  "Counts unique values. Stored as a GAUGE type in Datadog. Each value
+  in the stored timeseries is the count of unique values submitted to
+  StatsD for a metric over the flush period."
   ([client name value]
    (report! client "s" name value {}))
   ([client name value opts]
