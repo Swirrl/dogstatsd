@@ -4,6 +4,7 @@
      Total value/rate:
 
        (increment! client \"chat.request.count\"  1)
+       (decrement! client \"chat.request.count\"  1)
 
      In-the-moment value:
 
@@ -12,6 +13,7 @@
      Values distribution (mean, avg, max, percentiles):
 
        (histogram! client \"chat.request.time\"   188.17)
+       (distribution! client \"chat.request.time\"   188.17)
 
      Counting unique values:
 
@@ -97,7 +99,7 @@
 
 
 (defn increment!
-  "Send a count event to dogstatsd.
+  "Sends an increment count event to dogstatsd.
 
   Used for deriving total value/rate.
 
@@ -114,6 +116,25 @@
    (report! client "c" name value {}))
   ([client name value opts]
    (report! client "c" name value opts)))
+
+(defn decrement!
+  "Sends a decrement count event to dogstatsd.
+
+  Used for deriving total value/rate.
+
+  The COUNT metric submission type represents the total number of
+  event occurrences in one time interval. A COUNT can be used to track
+  the total number of connections made to a database or the total
+  number of requests to an endpoint. This number of events can
+  accumulate or decrease over time—it is not monotonically increasing.
+
+  Note: A COUNT is different from the RATE metric type, which represents
+  the number of event occurrences normalized per second given the
+  defined time interval"
+  ([client name value]
+   (report! client "c" name (- value) {}))
+  ([client name value opts]
+   (report! client "c" name (- value) opts)))
 
 (defn gauge!
   "Submit a gauge to dogstatsd.
