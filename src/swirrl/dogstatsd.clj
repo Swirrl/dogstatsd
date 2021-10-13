@@ -77,18 +77,15 @@
     (str/join ",")))
 
 
-(defn- format-metric [client metric type value tags sample-rate]
-  (assert (re-matches #"[a-zA-Z][a-zA-Z0-9_.]*" metric) (str "Invalid metric name: " metric))
-  (assert (< (count metric) 200) (str "Metric name too long: " metric))
+(defn format-metric [client-tags metric type value tags sample-rate]
   (str metric
        ":" value
        "|" type
        (when-not (== 1 sample-rate)
          (str "|@" sample-rate))
-       (let [global-tags (:tags client)]
-         (when (or (not-empty tags)
-                   (not-empty global-tags))
-           (str "|#" (format-tags global-tags tags))))))
+       (when (or (not-empty tags)
+                 (not-empty client-tags))
+         (str "|#" (format-tags client-tags tags)))))
 
 
 (defn- report-fn [type]
@@ -99,7 +96,7 @@
             sample-rate (:sample-rate opts 1)]
         (when (or (== sample-rate 1)
                   (< (rand) sample-rate))
-          (send! client (format-metric client name type value tags sample-rate)))))))
+          (send! client (format-metric (:tags client) name type value tags sample-rate)))))))
 
 
 (def increment! (report-fn "c"))
