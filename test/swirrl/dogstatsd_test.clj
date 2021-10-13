@@ -19,7 +19,4 @@
       (sut/set! client ::set "a-value")
       (sut/event! client "event title" "some text here" {})
 
-      (is true)))
-
-
-  )
+      (is true))))
