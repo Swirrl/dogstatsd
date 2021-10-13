@@ -3,28 +3,28 @@
 
      Total value/rate:
 
-       (increment! client \"chat.request.count\"  1)
-       (decrement! client \"chat.request.count\"  1)
+       (increment! client :chat.request/count  1)
+       (decrement! client :chat.request/count  1)
 
      In-the-moment value:
 
-       (gauge! client \"chat.ws.connections\" 17)
+       (gauge! client :chat.ws.connections 17)
 
      Values distribution (mean, avg, max, percentiles):
 
-       (histogram! client \"chat.request.time\"   188.17)
-       (distribution! client \"chat.request.time\"   188.17)
+       (histogram! client :chat.request/time   188.17)
+       (distribution! client :chat.request/time   188.17)
 
      Counting unique values:
 
-       (set! client \"chat.user.email\" \"nikita@mailforspam.com\")
+       (set! client :chat.user/email \"nikita@mailforspam.com\")
 
      Supported opts (third argument):
 
        { :tags => [String+] | { Keyword -> Any | Nil }
          :sample-rate => Double[0..1] }
 
-     E.g. (increment! client \"chat.request.count\" 1
+     E.g. (increment! client :chat.request/count 1
             { :tags        { :env \"production\", :chat nil } ;; => |#env:production,chat
               :tags        [ \"env:production\"  \"chat\" ]   ;; => |#env:production,chat
               :sample-rate 0.5 }                              ;; Throttling 50%"}
@@ -77,9 +77,26 @@
                                      (str (name k) ":" v)))))))
     (str/join ",")))
 
+(defprotocol RenderMetric
+  (render-metric-key [t]))
+
+(extend-protocol RenderMetric
+  String
+  (render-metric-key [s]
+    s)
+
+  clojure.lang.Keyword
+  (render-metric-key [k]
+    (-> k
+        str
+        (str/replace-first ":" "")
+        (str/replace "/" ".")
+        (str/replace "-" "_"))))
+
+(comment (render-metric-key :foo.bar.blah-blah/baz))
 
 (defn format-metric [client-tags metric type value tags sample-rate]
-  (str metric
+  (str (render-metric-key metric)
        ":" value
        "|" type
        (when-not (== 1 sample-rate)

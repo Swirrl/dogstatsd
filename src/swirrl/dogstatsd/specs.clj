@@ -16,7 +16,6 @@
 (s/def :swirrl.dogstatsd/tags
   (s/nilable (s/every-kv keyword? any?)))
 
-
 (s/def ::dogconfig/client
   (s/keys :req-un [::config/endpoint] :opt-un [:swirrl.dogstatsd/tags]))
 
@@ -24,12 +23,12 @@
   (s/keys :req-un [::socket ::addr] :opt-un [:swirrl.dogstatsd/tags]))
 
 (defn metric-name? [metric]
-  (re-matches #"[a-zA-Z][a-zA-Z0-9_.]*" metric))
+  (re-matches #"[a-zA-Z][a-zA-Z0-9_.]*" (datadog/render-metric-key metric)))
 
 (defn metric-length? [metric]
-  (< (count metric) 200))
+  (< (count (datadog/render-metric-key metric)) 200))
 
-(s/def :swirrl.dogstatsd/metric (s/and string?
+(s/def :swirrl.dogstatsd/metric (s/and #(satisfies? datadog/RenderMetric %)
                                        metric-name?
                                        metric-length?))
 

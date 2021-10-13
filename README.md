@@ -54,34 +54,48 @@ After that, you can start reporting metrics:
 Total value/rate:
 
 ```clj
-(dogstatsd/increment! client "chat.request.count" 1)
+(dogstatsd/increment! client :chat.reques/count 1)
 ```
 
 In-the-moment value:
 
 ```clj
-(dogstatsd/gauge! client "chat.ws.connections" 17)
+(dogstatsd/gauge! client :chat.ws/connections 17)
 ```
 
 Values distribution (mean, avg, max, percentiles):
 
 ```clj
-(dogstatsd/histogram! client "chat.request.time" 188.17)
+(dogstatsd/histogram! client :chat.request/time 188.17)
 ```
 
 To measure function execution time, use `d/measure!`:
 
 ```clj
-(dogstatsd/measure! client "thread.sleep.time" {}
+(dogstatsd/measure! client :thread.sleep/time {}
   (Thread/sleep 1000))
 ```
 
 Counting unique values:
 
 ```clj
-(dogstatsd/set! client "chat.user.email" "nikita@mailforspam.com")
+(dogstatsd/set! client :chat.user/email "nikita@mailforspam.com")
 ```
 
+Note metrics can be identified with either a keyword or a string.
+Namespaced keywords are converted into datadog metric names by
+removing the starting `:` and then performing the following
+substitutions:
+
+```
+"/" -> "."
+"-" -> "_"
+```
+
+Supported metric names _must_ conform to the
+[recommendations](https://docs.datadoghq.com/developers/guide/what-best-practices-are-recommended-for-naming-metrics-and-tags/)
+in the datadog docs. Specs may be added in the future to tighten
+conformance.
 
 ## Tags and throttling
 
