@@ -21,12 +21,9 @@ to configure in an integrant `defmethod` themselves.
 
 ## Setting things up
 
-Add to project.clj or deps.edn:
+Add to your project.clj or deps.edn.
 
-```clj
-[com.swirrl/dogstatsd "0.1.1"] ;; leiningen
-com.swirrl/dogstatsd {:mvn/version "0.1.2"} ;; tools.deps
-```
+[![Clojars Project](https://img.shields.io/clojars/v/io.github.swirrl/dogstatsd.svg)](https://clojars.org/io.github.swirrl/dogstatsd)
 
 Require it:
 
