@@ -40,13 +40,13 @@ Require it:
 To configure, provide URL of DogStatsD:
 
 ```clj
-(def client (dogstatsd/configure "localhost:8125"))
+(def client (dogstatsd/configure {:endpoint "localhost:8125"}))
 ```
 
 Optionally, you can provide set of global tags to be appended to every metric:
 
 ```clj
-(def client (dogstatsd/configure "localhost:8125" { :tags {:env "production", :project "Secret"} }))
+(def client (dogstatsd/configure { :endpoint "localhost:8125" :tags {:env "production", :project "Secret"} }))
 ```
 
 

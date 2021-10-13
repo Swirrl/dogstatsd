@@ -1,5 +1,5 @@
 (ns ^{:doc
-      "(def client (configure {:uri \"localhost:8125\"}))
+      "(def client (configure {:endpoint \"localhost:8125\"}))
 
      Total value/rate:
 
@@ -34,17 +34,17 @@
 
 
 (defn configure
-  "Just pass StatsD server URI:
+  "Just pass StatsD server endpoint:
 
-     (configure {:uri \"localhost:8125\"})
-     (configure {:uri \":8125\"})
-     (configure {:url \"localhost\"})
+     (configure {:endpoint \"localhost:8125\"})
+     (configure {:endpoint \":8125\"})
+     (configure {:endpoint \"localhost\"})
 
    You can also set extra system-wide tags:
 
-     (configure {:uri \"localhost:8125\" :tags {:env \"production\"}})"
-  [{:keys [uri] :as opts}]
-  (when-let [[_ host port] (and uri (re-matches #"([^:]*)(?:\:(\d+))?" uri))]
+     (configure {:endpoint \"localhost:8125\" :tags {:env \"production\"}})"
+  [{:keys [endpoint] :as opts}]
+  (when-let [[_ host port] (and endpoint (re-matches #"([^:]*)(?:\:(\d+))?" endpoint))]
     (let [host   (if (str/blank? host) "localhost" host)
           port   (if (str/blank? port) 8125 port)
           port   (if (string? port) (Integer/parseInt port) port)
