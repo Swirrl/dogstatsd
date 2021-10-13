@@ -4,7 +4,7 @@
             [org.corfield.build :as bb]))
 
 (def lib 'io.github.swirrl/dogstatsd)
-(def version "0.1.4")
+(def version "v0.1.5")
 #_ ; alternatively, use MAJOR.MINOR.COMMITS:
 (def version (format "1.0.%s" (b/git-count-revs nil)))
 
