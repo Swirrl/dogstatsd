@@ -29,7 +29,13 @@
                           metric-name?
                           metric-length?))
 
-(def metric-types #{"g" "c" "h"})
+(def metric-types #{"c" ;; counter
+                    "g" ;; gauge
+                    "h" ;; histogram
+                    "s" ;; set
+                    "d" ;; distribution
+                    "ms" ;; timing (not yet supported)
+                    })
 
 (s/def ::sample-rate (s/and number?
                             (comp not ratio?)))
