@@ -146,6 +146,22 @@
   ([client name value opts]
    (report! client "h" name value opts)))
 
+(defn distribution!
+  "The DISTRIBUTION metric type is specific to DogStatsD. Emit a
+  DISTRIBUTION metric-stored as a DISTRIBUTION metric-to Datadog.
+
+  (distribution! client \"example-metric.gauge\" (rand-int 20))
+
+  The above instrumentation calculates the sum, count, average,
+  minimum, maximum, 50th percentile (median), 75th percentile, 90th
+  percentile, 95th percentile and 99th percentile. Distributions can
+  be used to measure the distribution of any type of value, such as
+  the size of uploaded files, or classroom test scores."
+  ([client name value]
+   (report! client "d" name value {}))
+  ([client name value opts]
+   (report! client "d" name value opts)))
+
 
 (defmacro measure!
   "Measures the time taken to evaluate body and submits it as a
@@ -157,7 +173,14 @@
      res#))
 
 
-(def set! (report-fn "s"))
+(defn set!
+  "Stored as a GAUGE type in Datadog. Each value in the stored
+  timeseries is the count of unique values submitted to StatsD for a
+  metric over the flush period."
+  ([client name value]
+   (report! client "s" name value {}))
+  ([client name value opts]
+   (report! client "s" name value opts)))
 
 
 (defn- escape-event-string [s]
@@ -192,7 +215,11 @@
 
 
 (defn event!
-  "title => String
+  "Events are records of notable changes relevant for managing and
+  troubleshooting IT operations, such as code deployments, service
+  health, configuration changes, or monitoring alerts.
+
+   title => String
    text  => String
    opts  => { :tags             => [String+] | { Keyword -> Any | Nil }
               :date-happened    => #inst
