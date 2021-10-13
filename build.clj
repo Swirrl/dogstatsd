@@ -13,7 +13,7 @@
   (bb/run-tests opts))
 
 (defn tag [opts]
-  (b/process {:command-args ["git" "tag" (version) "HEAD"]})
+  (b/process {:command-args ["git" "tag" (str "v" (version)) "HEAD"]})
   opts)
 
 (defn build
