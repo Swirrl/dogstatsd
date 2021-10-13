@@ -40,3 +40,9 @@
       (assoc :lib lib :version (version))
       (push-tags)
       (bb/deploy)))
+
+
+(defn release [opts]
+  (-> opts
+      (build)
+      (deploy)))
