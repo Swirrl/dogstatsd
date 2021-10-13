@@ -56,8 +56,7 @@
 
 
 (defn- send! [client ^String payload]
-;;   (println "[ metrics ]" payload)
-  (if-let [{:keys [socket addr]} client]
+  (when-let [{:keys [socket addr]} client]
     (let [bytes (.getBytes payload "UTF-8")]
       (try
         (.send ^DatagramSocket socket
@@ -88,27 +87,70 @@
          (str "|#" (format-tags client-tags tags)))))
 
 
-(defn- report-fn [type]
-  (fn report!
-    ([client name value] (report! client name value {}))
-    ([client name value opts]
-      (let [tags        (:tags opts [])
-            sample-rate (:sample-rate opts 1)]
-        (when (or (== sample-rate 1)
-                  (< (rand) sample-rate))
-          (send! client (format-metric (:tags client) name type value tags sample-rate)))))))
+(defn- report!
+  [client type name value opts]
+  (let [tags        (:tags opts [])
+        sample-rate (:sample-rate opts 1)]
+    (when (or (== sample-rate 1)
+              (< (rand) sample-rate))
+      (send! client (format-metric (:tags client) name type value tags sample-rate)))))
 
 
-(def increment! (report-fn "c"))
+(defn increment!
+  "Send a count event to dogstatsd.
+
+  Used for deriving total value/rate.
+
+  The COUNT metric submission type represents the total number of
+  event occurrences in one time interval. A COUNT can be used to track
+  the total number of connections made to a database or the total
+  number of requests to an endpoint. This number of events can
+  accumulate or decrease over time—it is not monotonically increasing.
+
+  Note: A COUNT is different from the RATE metric type, which represents
+  the number of event occurrences normalized per second given the
+  defined time interval"
+  ([client name value]
+   (report! client "c" name value {}))
+  ([client name value opts]
+   (report! client "c" name value opts)))
+
+(defn gauge!
+  "Submit a gauge to dogstatsd.
+
+  Used for deriving an in-the-moment value.
+
+  Suppose you are submitting a GAUGE metric, temperature, from a
+  single host running the Datadog Agent. This host emits the following
+  values in a flush time interval: [71,71,71,71,71,71,71.5].
+
+  The Agent submits the last reported number, in this case 71.5, as
+  the GAUGE metric’s value."
+  ([client name value]
+   (report! client "g" name value {}))
+  ([client name value opts]
+   (report! client "g" name value opts)))
 
 
-(def gauge! (report-fn "g"))
+(defn histogram!
+  "The HISTOGRAM metric type is specific to DogStatsD. Emit a HISTOGRAM
+  metric—stored as a GAUGE and RATE metric—to Datadog.
+
+  Used for deriving a values distribution (mean, avg, max, percentiles).
+
+  Learn more about the HISTOGRAM type here:
+
+  https://docs.datadoghq.com/metrics/types/?tab=histogram#definition"
+  ([client name value]
+   (report! client "h" name value {}))
+  ([client name value opts]
+   (report! client "h" name value opts)))
 
 
-(def histogram! (report-fn "h"))
-
-
-(defmacro measure! [client metric opts & body]
+(defmacro measure!
+  "Measures the time taken to evaluate body and submits it as a
+  histogram metric."
+  [client metric opts & body]
   `(let [t0#  (System/currentTimeMillis)
          res# (do ~@body)]
      (histogram! ~client ~metric (- (System/currentTimeMillis) t0#) ~opts)
