@@ -202,7 +202,8 @@ some.gauge:1|csome.histogram:1|h_e{10,8}:some.event|an event|#some::tags
 - Fork project and rename
 - Switch to tools.deps and tools.build
 - Support keywords as metric names
-
+- Add some clojure specs
+- Add a very basic test
 
 *0.1.2*
 
