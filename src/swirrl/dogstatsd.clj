@@ -1,34 +1,19 @@
-(ns ^{:doc
-      "(def client (configure {:endpoint \"localhost:8125\"}))
+(ns swirrl.dogstatsd
+  "A library for submitting metrics and events to dogstatsd, Datadogs
+  statsd agent.
 
-     Total value/rate:
+  Usage, first create a statsd \"client\", then use it to talk to
+  dogstatsd with the various metric & event functions.
 
-       (increment! client :chat.request/count  1)
-       (decrement! client :chat.request/count  1)
+  ```clojure
 
-     In-the-moment value:
+  (require '[swirrl.dogstatsd :as dog])
+  (def statsd (configure {:endpoint \"localhost:8125\"}))
 
-       (gauge! client :chat.ws.connections 17)
-
-     Values distribution (mean, avg, max, percentiles):
-
-       (histogram! client :chat.request/time   188.17)
-       (distribution! client :chat.request/time   188.17)
-
-     Counting unique values:
-
-       (set! client :chat.user/email \"nikita@mailforspam.com\")
-
-     Supported opts (third argument):
-
-       { :tags => [String+] | { Keyword -> Any | Nil }
-         :sample-rate => Double[0..1] }
-
-     E.g. (increment! client :chat.request/count 1
-            { :tags        { :env \"production\", :chat nil } ;; => |#env:production,chat
-              :tags        [ \"env:production\"  \"chat\" ]   ;; => |#env:production,chat
-              :sample-rate 0.5 }                              ;; Throttling 50%"}
-    swirrl.dogstatsd
+  ;; call a metric function e.g.
+  (dog/increment! statsd \"some.count\")
+  ```
+  "
   (:require
     [clojure.string :as str])
   (:import
