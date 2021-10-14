@@ -23,7 +23,7 @@ to configure in an integrant `defmethod` themselves.
 
 Add to your project.clj or deps.edn.
 
-[![Clojars Project](https://img.shields.io/clojars/v/io.github.swirrl/dogstatsd.svg)](https://clojars.org/io.github.swirrl/dogstatsd)
+[![Clojars Project](https://img.shields.io/clojars/v/io.github.swirrl/dogstatsd.svg)](https://clojars.org/io.github.swirrl/dogstatsd) [![cljdoc badge](https://cljdoc.org/badge/io.github.swirrl/dogstatsd)](https://cljdoc.org/d/io.github.swirrl/dogstatsd)
 
 Require it:
 
