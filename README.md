@@ -1,5 +1,7 @@
 # Clojure client for DogStatsD, Datadog’s StatsD agent
 
+[![Clojars Project](https://img.shields.io/clojars/v/io.github.swirrl/dogstatsd.svg)](https://clojars.org/io.github.swirrl/dogstatsd) [![cljdoc badge](https://cljdoc.org/badge/io.github.swirrl/dogstatsd)](https://cljdoc.org/d/io.github.swirrl/dogstatsd)
+
 *NOTE: This project is a fork of [cognician/dogstatsd](https://github.com/Cognician/dogstatsd-clj)*
 
 The primary motivation for this fork was to make a version of the
@@ -23,18 +25,13 @@ to configure in an integrant `defmethod` themselves.
 
 Add to your project.clj or deps.edn.
 
-[![Clojars Project](https://img.shields.io/clojars/v/io.github.swirrl/dogstatsd.svg)](https://clojars.org/io.github.swirrl/dogstatsd) [![cljdoc badge](https://cljdoc.org/badge/io.github.swirrl/dogstatsd)](https://cljdoc.org/d/io.github.swirrl/dogstatsd)
-
 Require it:
 
 ```clj
 (require '[swirrl.dogstatsd :as dogstatsd])
 ```
 
-
-## Configuring
-
-To configure, provide URL of DogStatsD:
+To configure, provide the URL of DogStatsD:
 
 ```clj
 (def client (dogstatsd/configure {:endpoint "localhost:8125"}))
@@ -46,30 +43,75 @@ Optionally, you can provide set of global tags to be appended to every metric:
 (def client (dogstatsd/configure { :endpoint "localhost:8125" :tags {:env "production", :project "Secret"} }))
 ```
 
+### Optionally Integrating with integrant
 
-## Reporting
+One of the motivations for forking cognicians dogstatsd, was to more
+easily integrate with integrant. To do this simply define an
+`ig/init-key` wrapper for configure, with an optional
+`ig/pre-init-spec`, for example:
 
-After that, you can start reporting metrics:
+``` clojure
+(ns myapp.example
+   (:require [clojure.core.alpha.spec :as s]
+             [integrant.core :as ig]
+             [swirrl.dogstatsd :as dog]
+             [swirrl.dogstatsd.specs :as dogspecs]))
+
+;; optional to validate client configuration:
+(defmethod ig/pre-init-spec [_]
+  (s/keys :req-un [::dogspecs/client-config]))
+
+;; The datadog dogstatsd client wrapper
+(defmethod ig/init-key :myapp.example/datadog [_ opts]
+  (dog/configure opts))
+
+;; An example component using the statsd client to submit a metric.
+(defmethod ig/init-key :myapp.example/metric-submitter [_ {:keys [statsd]}]
+  (dog/increment! statsd "some.example.metric.count"))
+```
+
+This might then be configured like this in an integrant edn
+configuration:
+
+``` edn
+{
+  :my.example/datadog {:endpoint "localhost:8125" :tags {:env "dev"}}
+  :my.example/metric-submitter {:statsd #ig/ref :my.example/datadog}
+}
+```
+
+## Usage
+
+After that, you can start reporting metrics. All reporters take a
+`client` as returned via `configure` a `metric-name` and a `value`
+(though reporters such as `increment!` may provide a default `value`).
+Metrics all optionally take a map of `opts`, which let you set `:tags`
+and adjust the `:sample-rate` (default 1).
+
+Note `metic-name`'s can be provided as either a string or a clojure
+keyword. If a keyword is given it is sanitised to conform to datadog
+convetions prior to transmission by removing the leading `:` and
+replacing `/` with `.` and `-` with `_`.
 
 Total value/rate:
 
 ```clj
-(dogstatsd/increment! client :chat.reques/count 1)
+(dogstatsd/increment! client :chat.request/count 1)
 ```
 
 In-the-moment value:
 
 ```clj
-(dogstatsd/gauge! client :chat.ws/connections 17)
+(dogstatsd/gauge! client "chat.ws.connections" 17)
 ```
 
 Values distribution (mean, avg, max, percentiles):
 
 ```clj
-(dogstatsd/histogram! client :chat.request/time 188.17)
+(dogstatsd/histogram! client "chat.request.time" 188.17)
 ```
 
-To measure function execution time, use `d/measure!`:
+To measure function execution time, use the macro `d/measure!`:
 
 ```clj
 (dogstatsd/measure! client :thread.sleep/time {}
@@ -138,17 +180,6 @@ where opts could contain any subset of:
 ```
 
 
-## Example
-
-```clj
-(require '[swirrl/dogstatsd :as dogstatsd])
-
-(def client (dogstatsd/configure "localhost:8125" {:tags {:env "production"}}))
-
-(dogstatsd/increment! client "request.count" 1 {:tags ["endpoint:messages__list"]
-                                                :sample-rate 0.5})
-```
-
 ## Local testing
 
 Since DogStatsD is DataDog's service, you'll want to tighten the loop
@@ -164,12 +195,13 @@ some.gauge:1|csome.histogram:1|h_e{10,8}:some.event|an event|#some::tags
 
 ## CHANGES
 
-*swirrl/dogstatsd 0.1.3*
+*swirrl/dogstatsd 0.1.35*
 
 - Make client argument explicit on all reporting procedures
 - Update README
 - Fork project and rename
 - Switch to tools.deps and tools.build
+- Support keywords as metric names
 
 
 *0.1.2*
