@@ -16,8 +16,10 @@
 (s/def ::client-config
   (s/keys :req-un [::endpoint] :opt-un [::tags]))
 
+(s/def ::enabled-client (s/keys :req-un [::socket ::addr] :opt-un [::tags]))
+
 (s/def ::client
-  (s/keys :req-un [::socket ::addr] :opt-un [::tags]))
+  (s/nilable ::enabled-client))
 
 (defn- metric-name? [metric]
   (re-matches #"[a-zA-Z][a-zA-Z0-9_.]*" (datadog/render-metric-key metric)))
