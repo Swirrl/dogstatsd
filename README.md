@@ -4,6 +4,8 @@
 
 *NOTE: This project is a fork of [cognician/dogstatsd](https://github.com/Cognician/dogstatsd-clj)*
 
+It targets both [Clojure](https://clojure.org/) and [Babashka](https://babashka.org/).
+
 The primary motivation for this fork was to make a version of the
 library which was less complected around the configuration of the
 statsd client. In particular making the library more ameneable to use
